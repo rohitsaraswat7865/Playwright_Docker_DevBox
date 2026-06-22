@@ -1,4 +1,4 @@
-FROM linuxserver/code-server:4.92.2
+FROM linuxserver/code-server:4.125.0
 
 USER root
 
