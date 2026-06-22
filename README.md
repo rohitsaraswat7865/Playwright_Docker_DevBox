@@ -106,6 +106,52 @@ npx playwright codegen --output tests/recorded.spec.js https://example.com
 | `9323` | Playwright | HTML reports & trace viewer |
 | `6080` | noVNC | Headed browser tests GUI |
 
+## Remote Test Triggering
+
+Run Playwright tests remotely from CI/CD pipelines, scheduled jobs.
+
+### 1. Docker Exec (Running Container)
+
+Execute tests in a running container:
+```bash
+docker exec <container_id> npx playwright test
+```
+
+Get container ID:
+```bash
+docker ps | grep code-server-node
+```
+
+### 2. GitHub Actions CI/CD
+
+**File: `.github/workflows/playwright-tests.yml`**
+```yaml
+name: Playwright Tests
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run Playwright Tests in Container
+        run: |
+          CONTAINER_ID=$(docker ps -q -f ancestor=code-server-node)
+          docker exec $CONTAINER_ID npx playwright test
+```
+
+### 3. GitLab CI/CD
+
+**File: `.gitlab-ci.yml`**
+```yaml
+playwright_tests:
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - CONTAINER_ID=$(docker ps -q -f ancestor=code-server-node)
+    - docker exec $CONTAINER_ID npx playwright test
+```
+
 ## Environment Variables
 
 - `PASSWORD`: Set the VS Code login password (default: prompt on first login)
