@@ -192,7 +192,6 @@ docker run -d -p 8444:8443 -p 9324:9323 -p 6081:6080 ...
 
 ### Tests Timeout or Fail
 
-- Increase timeout in Playwright config: `timeout: 30000`
 - Check noVNC connection for headed tests
 - Verify all Playwright browsers are installed: `npx playwright install --with-deps`
 
