@@ -15,7 +15,7 @@ This project provides a complete containerized setup for:
 
 ✅ **Ubuntu/Linux Container** - Lightweight, portable Linux environment  
 ✅ **Playwright 2.0+** with all browsers (Chromium, Firefox, WebKit)  
-✅ **Code Server 4.92.2** - Full VS Code experience in the browser  
+✅ **Code Server 4.125.0** - Full VS Code experience in the browser  
 ✅ **Node.js 22** - Latest LTS runtime  
 ✅ **noVNC** - Remote desktop for headed Playwright tests  
 ✅ **Playwright Inspector** - Debug tests interactively  
@@ -152,6 +152,59 @@ playwright_tests:
     - docker exec $CONTAINER_ID npx playwright test
 ```
 
+### 4. Parallel Docker Exec Jobs
+
+Run multiple `docker exec` commands in parallel to the same container without conflicts. Each execution runs independently with isolated processes.
+
+**Benefits:**
+- ✅ Concurrent execution - all threads run simultaneously
+- ✅ No conflicts - each process has isolated workers
+- ✅ Scalable - container handles multiple concurrent `docker exec` calls
+- ✅ Full logging support - capture individual thread outputs
+
+**Basic Example (5 parallel jobs):**
+```bash
+CONTAINER_ID=$(docker ps -q -f ancestor=code-server-node)
+for i in {1..5}; do
+    docker exec $CONTAINER_ID npx playwright test --workers=1 &
+done
+wait
+```
+
+**With Individual Logging (10 parallel threads):**
+```powershell
+# PowerShell
+$ContainerId = "YOUR_CONTAINER_ID"
+$LogDir = ".\logs"
+New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
+
+$jobs = @()
+for ($i = 1; $i -le 10; $i++) {
+    $logFile = "$LogDir\thread_$i.log"
+    $job = Start-Job -ScriptBlock {
+        param($cid, $num, $log)
+        docker exec $cid npx playwright test --workers=1 *>&1 | Out-File -FilePath $log -Append
+    } -ArgumentList $ContainerId, $i, $logFile
+    $jobs += $job
+    Write-Host "[Thread $i] Started" -ForegroundColor Green
+}
+
+Write-Host "Waiting for all jobs to complete..." -ForegroundColor Cyan
+$jobs | Wait-Job
+
+Write-Host "All jobs completed!" -ForegroundColor Green
+Get-ChildItem $LogDir -File | ForEach-Object {
+    Write-Host "`n[$($_.Name)]" -ForegroundColor Yellow
+    Get-Content $_.FullName | Select-Object -Last 5
+}
+```
+
+**Performance Notes:**
+- Each `docker exec` is thread-safe and isolated
+- All threads share container resources (CPU/memory limits apply)
+- Total execution time ≈ longest individual thread (all run in parallel)
+- Use `--workers=N` to control parallelism within each exec call
+
 ## Environment Variables
 
 - `PASSWORD`: Set the VS Code login password (default: prompt on first login)
@@ -160,7 +213,7 @@ playwright_tests:
 
 ## Dockerfile Details
 
-- **Base Image**: `linuxserver/code-server:4.92.2` (Ubuntu/Linux based)
+- **Base Image**: `linuxserver/code-server:4.125.0` (Ubuntu/Linux based)
 - **OS**: Ubuntu Linux (containerized)
 - **Node.js**: Version 22 (via NodeSource repository)
 - **Playwright**: Global installation with all browsers and OS dependencies
