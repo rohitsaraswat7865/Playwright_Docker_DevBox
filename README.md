@@ -1,0 +1,165 @@
+# Playwright Docker DevBox
+
+A Docker-based development environment for **Playwright** testing with integrated VS Code, Node.js 22, and a browser GUI for headed tests.
+
+## Overview
+
+This project provides a complete containerized setup for:
+- Writing and running **Playwright** tests (headless and headed modes)
+- Interactive code development with **VS Code** in the browser
+- Visual test debugging with **noVNC** browser GUI
+- Recording test scenarios with **Playwright Codegen**
+- Viewing Playwright reports and traces
+
+## Features
+
+✅ **Ubuntu/Linux Container** - Lightweight, portable Linux environment  
+✅ **Playwright 2.0+** with all browsers (Chromium, Firefox, WebKit)  
+✅ **Code Server 4.92.2** - Full VS Code experience in the browser  
+✅ **Node.js 22** - Latest LTS runtime  
+✅ **noVNC** - Remote desktop for headed Playwright tests  
+✅ **Playwright Inspector** - Debug tests interactively  
+✅ **Pre-installed Tools**: Git, sudo, and all OS dependencies  
+
+## Prerequisites
+
+- Docker installed on your system
+- Port availability:
+  - `8443` - Code Server UI
+  - `9323` - Playwright reports/traces viewer
+  - `6080` - noVNC (browser GUI)
+
+## Quick Start
+
+Follow these 5 steps to get started:
+
+1. **Build** the Docker image
+2. **Run** the container with port mappings
+3. **Run Tests** using Playwright CLI
+4. **View Results** with Playwright reports and traces
+5. **Record Tests** using Playwright Codegen (optional)
+
+See the **Usage** section below for detailed commands.
+
+## Usage
+
+### 1. Build the Image
+
+```bash
+docker build -t code-server-node .
+```
+
+### 2. Run the Container
+
+```bash
+docker run -d -p 8443:8443 -p 9323:9323 -p 6080:6080 --security-opt seccomp=unconfined -e PASSWORD=yourpassword code-server-node
+```
+
+**Port Reference:**
+- `8443` = code-server (VS Code UI)
+- `9323` = Playwright HTML report / trace viewer
+- `6080` = noVNC (browser GUI for headed tests) — starts automatically
+
+### 3. Run Tests
+
+**Headless (no display needed):**
+```bash
+npx playwright test
+```
+
+**Headless with trace recording:**
+```bash
+npx playwright test --trace on
+```
+
+### 4. View Results
+
+**View HTML report:**
+```bash
+npx playwright show-report --host 0.0.0.0 --port 9323
+```
+
+**View trace for the most recent test result:**
+```bash
+npx playwright show-trace --host 0.0.0.0 --port 9323 $(ls -t test-results/*/trace.zip 2>/dev/null | head -1)
+```
+
+### 5. Recording Tests with Codegen
+
+> **Note:** Open [http://localhost:6080/vnc.html](http://localhost:6080/vnc.html) in your Windows browser → click Connect
+
+**Record and display in Inspector:**
+```bash
+npx playwright codegen https://example.com
+```
+
+**Record directly to a test file:**
+```bash
+npx playwright codegen --output tests/recorded.spec.js https://example.com
+```
+
+## Port Mappings
+
+| Port | Service | Purpose |
+|------|---------|---------|
+| `8443` | Code Server | VS Code web UI |
+| `9323` | Playwright | HTML reports & trace viewer |
+| `6080` | noVNC | Headed browser tests GUI |
+
+## Environment Variables
+
+- `PASSWORD`: Set the VS Code login password (default: prompt on first login)
+- `PLAYWRIGHT_BROWSERS_PATH`: Pre-configured at `/opt/ms-playwright`
+- `DISPLAY`: Set to `:1` for X11 display server
+
+## Dockerfile Details
+
+- **Base Image**: `linuxserver/code-server:4.92.2` (Ubuntu/Linux based)
+- **OS**: Ubuntu Linux (containerized)
+- **Node.js**: Version 22 (via NodeSource repository)
+- **Playwright**: Global installation with all browsers and OS dependencies
+- **GUI**: Xvfb + Openbox + x11vnc + noVNC stack for headed tests
+- **Auto-startup**: VNC services start automatically on container boot
+
+## Playwright Inspector Configuration
+
+The Dockerfile includes Openbox window manager configuration that automatically positions the Playwright Inspector:
+- **Position**: Right side of the screen (1300x, 0y)
+- **Size**: 620x1080px
+- **Accessible via**: noVNC browser GUI at port 6080
+
+## Troubleshooting
+
+### Container Won't Start
+
+Check Docker logs:
+```bash
+docker logs <container_id>
+```
+
+### Port Already in Use
+
+Remap ports in the `docker run` command:
+```bash
+docker run -d -p 8444:8443 -p 9324:9323 -p 6081:6080 ...
+```
+
+### Tests Timeout or Fail
+
+- Increase timeout in Playwright config: `timeout: 30000`
+- Check noVNC connection for headed tests
+- Verify all Playwright browsers are installed: `npx playwright install --with-deps`
+
+## Resources
+
+- [Playwright Documentation](https://playwright.dev)
+- [Code Server Documentation](https://coder.com/docs/code-server)
+- [Playwright Inspector Guide](https://playwright.dev/docs/inspector)
+
+## License
+
+This project is provided as-is for development and testing purposes.
+
+---
+
+**Last Updated**: 2026-06-22
