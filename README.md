@@ -1,15 +1,17 @@
 # Playwright Docker DevBox
 
-A Docker-based development environment for **Playwright** testing with integrated VS Code, Node.js 22, and a browser GUI for headed tests.
+A Docker-based development environment for **Playwright** testing with integrated VS Code, Node.js 22, and a browser GUI for headed tests. Run tests locally or in CI/CD pipelines with support for parallel execution and remote test triggering.
 
 ## Overview
 
 This project provides a complete containerized setup for:
 - Writing and running **Playwright** tests (headless and headed modes)
+- **Parallel test execution** - Run multiple concurrent `docker exec` jobs against a single container
+- **Remote test triggering** - Execute tests from CI/CD pipelines (GitHub Actions, GitLab, etc.)
 - Interactive code development with **VS Code** in the browser
 - Visual test debugging with **noVNC** browser GUI
 - Recording test scenarios with **Playwright Codegen**
-- Viewing Playwright reports and traces
+- Viewing Playwright reports and traces with individual logging
 
 ## Features
 
@@ -17,6 +19,8 @@ This project provides a complete containerized setup for:
 ✅ **Playwright 2.0+** with all browsers (Chromium, Firefox, WebKit)  
 ✅ **Code Server 4.125.0** - Full VS Code experience in the browser  
 ✅ **Node.js 22** - Latest LTS runtime  
+✅ **Parallel Test Execution** - Run 10+ concurrent `docker exec` jobs without conflicts  
+✅ **CI/CD Integration** - GitHub Actions and GitLab CI/CD ready  
 ✅ **noVNC** - Remote desktop for headed Playwright tests  
 ✅ **Playwright Inspector** - Debug tests interactively  
 ✅ **Pre-installed Tools**: Git, sudo, and all OS dependencies  
