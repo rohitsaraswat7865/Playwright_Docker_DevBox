@@ -178,29 +178,51 @@ wait
 **With Individual Logging (10 parallel threads):**
 ```powershell
 # PowerShell
-$ContainerId = "YOUR_CONTAINER_ID"
-$LogDir = ".\logs"
+# NOTE: Start-Job runs in a new process without the current PATH, so docker must
+# be passed as a full path argument rather than called directly.
+$DockerExe   = (Get-Command docker).Source   # resolves full path to docker.exe
+$ContainerId = "2ddca82ea98b40a971002281fad4d982b8ee2677b9617f3401a6ea1ab63f5233"
+# Use absolute path — Start-Job runs in a new process with a different working directory
+$LogDir      = Join-Path $PWD "logs"
 New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
+Remove-Item "$LogDir\thread_*.log" -Force -ErrorAction SilentlyContinue
 
 $jobs = @()
 for ($i = 1; $i -le 10; $i++) {
     $logFile = "$LogDir\thread_$i.log"
     $job = Start-Job -ScriptBlock {
-        param($cid, $num, $log)
-        docker exec $cid npx playwright test --workers=1 *>&1 | Out-File -FilePath $log -Append
-    } -ArgumentList $ContainerId, $i, $logFile
+        param($docker, $cid, $num, $log)
+        & $docker exec $cid npx playwright test --workers=1 2>&1 | Out-File -FilePath $log -Force
+    } -ArgumentList $DockerExe, $ContainerId, $i, $logFile
     $jobs += $job
     Write-Host "[Thread $i] Started" -ForegroundColor Green
 }
 
 Write-Host "Waiting for all jobs to complete..." -ForegroundColor Cyan
-$jobs | Wait-Job
+$jobs | Wait-Job -Timeout 300 | Out-Null
 
-Write-Host "All jobs completed!" -ForegroundColor Green
-Get-ChildItem $LogDir -File | ForEach-Object {
-    Write-Host "`n[$($_.Name)]" -ForegroundColor Yellow
-    Get-Content $_.FullName | Select-Object -Last 5
+Write-Host "All jobs completed!`n" -ForegroundColor Green
+
+$passed = 0; $failed = 0
+for ($i = 1; $i -le 10; $i++) {
+    $logFile = "$LogDir\thread_$i.log"
+    Write-Host "[$($i.ToString().PadLeft(2))] " -NoNewline -ForegroundColor Yellow
+    if (Test-Path $logFile) {
+        $content = Get-Content $logFile -Raw
+        Get-Content $logFile | Select-Object -Last 2 | ForEach-Object { Write-Host "     $_" }
+        if ($content -match "\d+ passed") {
+            Write-Host "     RESULT: PASSED" -ForegroundColor Green; $passed++
+        } else {
+            Write-Host "     RESULT: FAILED" -ForegroundColor Red;   $failed++
+        }
+    } else {
+        Write-Host "No log file — thread crashed" -ForegroundColor Red; $failed++
+    }
 }
+
+Write-Host "`n=== SUMMARY ===" -ForegroundColor Cyan
+Write-Host "Passed: $passed/10  |  Failed: $failed/10" -ForegroundColor $(if ($failed -eq 0) { "Green" } else { "Red" })
+$jobs | Remove-Job
 ```
 
 **Performance Notes:**
