@@ -14,6 +14,10 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
 
 WORKDIR /config/workspace
 
+# Clone the Playwright MCP Javascript repository from GitHub
+# RUN git clone --branch main https://github.com/rohitsaraswat7865/Playwright_MCP_Javascript.git . && \
+#   chown -R abc:abc /config/workspace
+
 # Document ports used by this image
 # 8443 = code-server UI | 9323 = Playwright report/trace | 6080 = noVNC
 EXPOSE 8443 9323 6080
