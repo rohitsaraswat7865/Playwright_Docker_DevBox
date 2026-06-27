@@ -15,8 +15,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
 WORKDIR /config/workspace
 #///////
 # Clone the Playwright MCP Javascript repository from GitHub
-# RUN git clone --branch main https://github.com/rohitsaraswat7865/Playwright_MCP_Javascript.git . && \
-#   chown -R abc:abc /config/workspace
+RUN git clone --branch main https://github.com/rohitsaraswat7865/Playwright_MCP_Javascript.git . && \
+  chown -R abc:abc /config/workspace
 
 # Document ports used by this image
 # 8443 = code-server UI | 9323 = Playwright report/trace | 6080 = noVNC
@@ -34,10 +34,10 @@ WORKDIR /config/workspace
 EXPOSE 8443 9323 6080
 
 # Pre-install Playwright and all browsers (Chromium, Firefox, WebKit) + OS deps
-ENV PLAYWRIGHT_BROWSERS_PATH=/opt/ms-playwright
-RUN npm install -g @playwright/test && \
-    npx playwright install --with-deps && \
-    chmod -R 755 /opt/ms-playwright
+#ENV PLAYWRIGHT_BROWSERS_PATH=/opt/ms-playwright
+#RUN npm install -g @playwright/test && \
+#    npx playwright install --with-deps && \
+#    chmod -R 755 /opt/ms-playwright
 
 # Openbox config: auto-position Playwright Inspector on the right side
 RUN mkdir -p /etc/openbox && \
